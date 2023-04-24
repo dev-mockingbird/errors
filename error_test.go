@@ -1,17 +1,18 @@
 package errors
 
 import (
-	"errors"
 	"testing"
 )
 
-func TestNotice(t *testing.T) {
-	err := Notice("hello world")
-	if !IsNotice(err) {
-		t.Fatal("hello world")
+func TestPrefixedError(t *testing.T) {
+	err := New("hello world", InternalError)
+	err = Wrap(Wrap(Wrap(err, "wrapped"), "wrapped 1"), "wrapped 2")
+	msg := err.Error()
+	if msg != "wrapped 2: wrapped 1: wrapped: [internal] hello world" {
+		t.Fatal("Error")
 	}
-	err = errors.New("normal error")
-	if IsNotice(err) {
-		t.Fatal("normal error")
+	prefix, msg := Parse(err)
+	if prefix != InternalError || msg != "hello world" {
+		t.Fatal("unwrap prefix")
 	}
 }

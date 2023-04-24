@@ -3,35 +3,65 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
-type noticeError struct {
-	msg string
+const (
+	InternalError = "internal"
+	PrefixNone    = ""
+)
+
+type prefixedError struct {
+	code string
+	msg  string
 }
 
-func (n noticeError) Error() string {
-	return n.msg
+func (e prefixedError) Error() string {
+	if e.code == "" {
+		return e.msg
+	}
+	return fmt.Sprintf("[%s] %s", e.code, e.msg)
 }
 
-func IsNotice(err error) bool {
-	_, ok := err.(noticeError)
-	return ok
+func Ancestor(err error) error {
+	origin := err.Error()
+	if idx := strings.LastIndex(origin, ": "); idx > -1 && idx < len(origin)-2 {
+		origin = origin[idx+2:]
+		return errors.New(origin)
+	}
+	return err
 }
 
-func Notice(msg string) error {
-	return noticeError{msg: msg}
-}
-
-func Noticef(format string, v ...any) error {
-	return noticeError{msg: fmt.Sprintf(format, v...)}
+func Parse(err error) (code string, msg string) {
+	origin := Ancestor(err).Error()
+	reg := regexp.MustCompile(`^\[.+\] `)
+	msg = reg.ReplaceAllStringFunc(origin, func(matched string) string {
+		code = regexp.MustCompile(`[\[\]]`).ReplaceAllString(strings.Trim(matched, " "), "")
+		return ""
+	})
+	return
 }
 
 func Wrap(err error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
-func New(msg string) error {
-	return errors.New(msg)
+func Unwrap(err error) error {
+	msg := err.Error()
+	if idx := strings.Index(msg, ": "); idx > -1 && idx < len(msg)-2 {
+		return New(msg[idx+2:])
+	}
+	return err
+}
+
+func New(msg string, code ...string) error {
+	return prefixedError{msg: msg, code: func() string {
+		if len(code) > 0 {
+			return code[0]
+		}
+		return ""
+	}()}
 }
 
 func Is(err, target error) bool {
