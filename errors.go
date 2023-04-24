@@ -12,16 +12,21 @@ const (
 	PrefixNone    = ""
 )
 
-type prefixedError struct {
-	code string
+type taggedError struct {
+	tags []string
 	msg  string
 }
 
-func (e prefixedError) Error() string {
-	if e.code == "" {
+func (e taggedError) Error() string {
+	if len(e.tags) == 0 {
 		return e.msg
 	}
-	return fmt.Sprintf("[%s] %s", e.code, e.msg)
+	en := make([]string, len(e.tags))
+	for i, code := range e.tags {
+		en[i] = "[" + code + "]"
+	}
+
+	return fmt.Sprintf("%s %s", strings.Join(en, " "), e.msg)
 }
 
 func Ancestor(err error) error {
@@ -33,13 +38,19 @@ func Ancestor(err error) error {
 	return err
 }
 
-func Parse(err error) (code string, msg string) {
-	origin := Ancestor(err).Error()
+func Parse(err error) (codes []string, msg string) {
+	origin := err.Error()
+	var rest string
+	if idx := strings.Index(origin, ": "); idx > -1 {
+		origin = origin[:idx]
+		rest = origin[idx:]
+	}
 	reg := regexp.MustCompile(`^\[.+\] `)
 	msg = reg.ReplaceAllStringFunc(origin, func(matched string) string {
-		code = regexp.MustCompile(`[\[\]]`).ReplaceAllString(strings.Trim(matched, " "), "")
+		codes = append(codes, regexp.MustCompile(`[\[\]]`).ReplaceAllString(strings.Trim(matched, " "), ""))
 		return ""
 	})
+	msg += rest
 	return
 }
 
@@ -55,13 +66,34 @@ func Unwrap(err error) error {
 	return err
 }
 
-func New(msg string, code ...string) error {
-	return prefixedError{msg: msg, code: func() string {
-		if len(code) > 0 {
-			return code[0]
+func Tag(err error, tag ...string) error {
+	return New(err.Error(), tag...)
+}
+
+func First(err error, tag string) error {
+	msg := err.Error()
+	if idx := strings.Index(msg, "["+tag+"]"); idx > -1 {
+		if idx := strings.LastIndex(msg[:idx], ": "); idx > -1 {
+			return errors.New(msg[idx+2:])
 		}
-		return ""
-	}()}
+		return err
+	}
+	return nil
+}
+
+func Last(err error, tag string) error {
+	msg := err.Error()
+	if idx := strings.LastIndex(msg, "["+tag+"]"); idx > -1 {
+		if idx := strings.LastIndex(msg[:idx], ": "); idx > -1 {
+			return errors.New(msg[idx+2:])
+		}
+		return err
+	}
+	return nil
+}
+
+func New(msg string, tag ...string) error {
+	return taggedError{msg: msg, tags: tag}
 }
 
 func Is(err, target error) bool {
