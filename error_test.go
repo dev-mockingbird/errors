@@ -20,7 +20,11 @@ func TestPrefixedError(t *testing.T) {
 	if msg != "[code1] [code2] wrapped 2: wrapped 1: wrapped: [internal] hello world" {
 		t.Fatal("tag")
 	}
-	err = First(err, InternalError)
+	err = FirstTagged(err, InternalError)
+	if err.Error() != "[internal] hello world" {
+		t.Fatal("first")
+	}
+	err = LastTagged(err, InternalError)
 	if err.Error() != "[internal] hello world" {
 		t.Fatal("first")
 	}

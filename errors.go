@@ -9,7 +9,6 @@ import (
 
 const (
 	InternalError = "internal"
-	PrefixNone    = ""
 )
 
 type taggedError struct {
@@ -30,6 +29,9 @@ func (e taggedError) Error() string {
 }
 
 func Ancestor(err error) error {
+	if err == nil {
+		return nil
+	}
 	origin := err.Error()
 	if idx := strings.LastIndex(origin, ": "); idx > -1 && idx < len(origin)-2 {
 		origin = origin[idx+2:]
@@ -39,6 +41,9 @@ func Ancestor(err error) error {
 }
 
 func Parse(err error) (codes []string, msg string) {
+	if err == nil {
+		return
+	}
 	origin := err.Error()
 	var rest string
 	if idx := strings.Index(origin, ": "); idx > -1 {
@@ -59,18 +64,27 @@ func Wrap(err error, msg string) error {
 }
 
 func Unwrap(err error) error {
+	if err == nil {
+		return nil
+	}
 	msg := err.Error()
 	if idx := strings.Index(msg, ": "); idx > -1 && idx < len(msg)-2 {
-		return New(msg[idx+2:])
+		return errors.New(msg[idx+2:])
 	}
 	return err
 }
 
 func Tag(err error, tag ...string) error {
+	if err == nil {
+		return nil
+	}
 	return New(err.Error(), tag...)
 }
 
-func First(err error, tag string) error {
+func FirstTagged(err error, tag string) error {
+	if err == nil {
+		return nil
+	}
 	msg := err.Error()
 	if idx := strings.Index(msg, "["+tag+"]"); idx > -1 {
 		if idx := strings.LastIndex(msg[:idx], ": "); idx > -1 {
@@ -81,7 +95,10 @@ func First(err error, tag string) error {
 	return nil
 }
 
-func Last(err error, tag string) error {
+func LastTagged(err error, tag string) error {
+	if err == nil {
+		return nil
+	}
 	msg := err.Error()
 	if idx := strings.LastIndex(msg, "["+tag+"]"); idx > -1 {
 		if idx := strings.LastIndex(msg[:idx], ": "); idx > -1 {
