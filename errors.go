@@ -50,7 +50,7 @@ func Parse(err error) (codes []string, msg string) {
 		origin = origin[:idx]
 		rest = origin[idx:]
 	}
-	reg := regexp.MustCompile(`^\[.+\] `)
+	reg := regexp.MustCompile(`^\[[a-z\-_]+\] `)
 	msg = reg.ReplaceAllStringFunc(origin, func(matched string) string {
 		codes = append(codes, regexp.MustCompile(`[\[\]]`).ReplaceAllString(strings.Trim(matched, " "), ""))
 		return ""
