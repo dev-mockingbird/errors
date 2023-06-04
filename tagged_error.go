@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/thoas/go-funk"
 )
 
 type taggedError struct {
@@ -41,10 +43,13 @@ func Tag(err error, tag ...string) error {
 	return taggedError{err: err, tags: tag}
 }
 
-func FirstTagged(err error, tag string) error {
+func FirstTagged(err error, tag ...string) error {
 	var ret error
 	Traverse(err, func(err error) bool {
 		if e, ok := err.(taggedError); ok {
+			if len(tag) > 0 && !funk.ContainsString(e.tags, tag[0]) {
+				return true
+			}
 			ret = e.err
 			return false
 		}
@@ -53,10 +58,13 @@ func FirstTagged(err error, tag string) error {
 	return ret
 }
 
-func LastTagged(err error, tag string) error {
+func LastTagged(err error, tag ...string) error {
 	var ret error
 	Traverse(err, func(err error) bool {
 		if e, ok := err.(taggedError); ok {
+			if len(tag) > 0 && !funk.ContainsString(e.tags, tag[0]) {
+				return true
+			}
 			ret = e.err
 		}
 		return true
