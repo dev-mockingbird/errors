@@ -24,6 +24,10 @@ func (e taggedError) Error() string {
 	return fmt.Sprintf("%s %s", strings.Join(en, " "), e.err.Error())
 }
 
+func (e taggedError) Tags() []string {
+	return e.tags
+}
+
 func (e taggedError) Unwrap() error {
 	return e.err
 }
