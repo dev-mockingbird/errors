@@ -32,12 +32,14 @@ func (e taggedError) Unwrap() error {
 	return e.err
 }
 
-func Parse(err error) (codes []string, msg string) {
-	if taggedError, ok := err.(taggedError); ok {
-		return taggedError.tags, taggedError.err.Error()
+func Tags(err error) []string {
+	tags, ok := err.(interface {
+		Tags() []string
+	})
+	if ok {
+		return tags.Tags()
 	}
-	msg = err.Error()
-	return
+	return nil
 }
 
 func Tag(err error, tag ...string) error {
