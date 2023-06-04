@@ -21,10 +21,10 @@ func TestTaggedError(t *testing.T) {
 	if te != "[wrap-tag] wrap: [test] hello world" {
 		t.Fatal("tag wrap error")
 	}
-	if err := FirstTagged(err, "wrap-tag"); err.Error() != "wrap: [test] hello world" {
+	if err := FirstTagged(err, "wrap-tag"); err.Error() != "[wrap-tag] wrap: [test] hello world" {
 		t.Fatal("first tagged error")
 	}
-	if err := LastTagged(err, "test"); err == nil || err != nil && err.Error() != "hello world" {
+	if err := LastTagged(err, "test"); err == nil || err != nil && err.Error() != "[test] hello world" {
 		t.Fatal("last tagged error")
 	}
 }

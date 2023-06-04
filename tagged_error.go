@@ -56,7 +56,7 @@ func FirstTagged(err error, tag ...string) error {
 			if len(tag) > 0 && !funk.ContainsString(e.tags, tag[0]) {
 				return true
 			}
-			ret = e.err
+			ret = e
 			return false
 		}
 		return true
@@ -71,7 +71,7 @@ func LastTagged(err error, tag ...string) error {
 			if len(tag) > 0 && !funk.ContainsString(e.tags, tag[0]) {
 				return true
 			}
-			ret = e.err
+			ret = e
 		}
 		return true
 	})
