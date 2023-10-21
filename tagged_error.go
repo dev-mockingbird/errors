@@ -8,9 +8,17 @@ import (
 	"github.com/thoas/go-funk"
 )
 
+type HasCode interface {
+	GetCode() string
+}
+
 type taggedError struct {
 	tags []string
 	err  error
+}
+
+func (e taggedError) GetCode() string {
+	return strings.Join(e.tags, ";")
 }
 
 func (e taggedError) Error() string {
